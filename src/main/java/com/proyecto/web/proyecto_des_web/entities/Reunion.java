@@ -33,11 +33,11 @@ public class Reunion {
     
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "cliente_id", nullable = false)
-    private Usuario cliente;
+    private Cliente cliente;
     
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "vendedor_id", nullable = false)
-    private Usuario vendedor;
+    private Vendedor vendedor;
     
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "producto_id", nullable = false)

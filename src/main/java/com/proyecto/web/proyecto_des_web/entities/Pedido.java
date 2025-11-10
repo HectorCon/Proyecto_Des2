@@ -39,11 +39,11 @@ public class Pedido {
     
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "cliente_id", nullable = false)
-    private Usuario cliente;
+    private Cliente cliente;
     
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "vendedor_id", nullable = false)
-    private Usuario vendedor;
+    private Vendedor vendedor;
     
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore

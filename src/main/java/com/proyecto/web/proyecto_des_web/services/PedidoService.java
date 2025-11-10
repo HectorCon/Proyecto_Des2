@@ -2,14 +2,8 @@ package com.proyecto.web.proyecto_des_web.services;
 
 import com.proyecto.web.proyecto_des_web.dto.DetallePedidoDTO;
 import com.proyecto.web.proyecto_des_web.dto.PedidoDTO;
-import com.proyecto.web.proyecto_des_web.entities.DetallePedido;
-import com.proyecto.web.proyecto_des_web.entities.Pedido;
-import com.proyecto.web.proyecto_des_web.entities.Producto;
-import com.proyecto.web.proyecto_des_web.entities.Usuario;
-import com.proyecto.web.proyecto_des_web.repositories.DetallePedidoRepository;
-import com.proyecto.web.proyecto_des_web.repositories.PedidoRepository;
-import com.proyecto.web.proyecto_des_web.repositories.ProductoRepository;
-import com.proyecto.web.proyecto_des_web.repositories.UsuarioRepository;
+import com.proyecto.web.proyecto_des_web.entities.*;
+import com.proyecto.web.proyecto_des_web.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +21,8 @@ public class PedidoService {
     private final PedidoRepository pedidoRepository;
     private final DetallePedidoRepository detallePedidoRepository;
     private final ProductoRepository productoRepository;
-    private final UsuarioRepository usuarioRepository;
+    private final ClienteRepository clienteRepository;
+    private final VendedorRepository vendedorRepository;
 
     public List<PedidoDTO> findAll() {
         return pedidoRepository.findAll().stream()
@@ -66,22 +61,15 @@ public class PedidoService {
 
     @Transactional
     public Pedido crearPedido(Long clienteId, Long vendedorId, List<DetallePedidoDTO> detallesDTO, String notas) {
-        Usuario cliente = usuarioRepository.findById(clienteId)
+        Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
-        Usuario vendedor = usuarioRepository.findById(vendedorId)
+        Vendedor vendedor = vendedorRepository.findById(vendedorId)
                 .orElseThrow(() -> new RuntimeException("Vendedor no encontrado"));
 
-        Pedido pedido = new Pedido();
-        pedido.setNumeroPedido(generarNumeroPedido());
-        pedido.setCliente(cliente);
-        pedido.setVendedor(vendedor);
-        pedido.setNotas(notas);
-        pedido.setEstado(Pedido.EstadoPedido.PENDIENTE);
-
+        // Calcular el total primero
         BigDecimal total = BigDecimal.ZERO;
-
-        pedido = pedidoRepository.save(pedido);
-
+        
+        // Validar productos y calcular total antes de crear el pedido
         for (DetallePedidoDTO detalleDTO : detallesDTO) {
             Producto producto = productoRepository.findById(detalleDTO.getProductoId())
                     .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
@@ -90,6 +78,27 @@ public class PedidoService {
             if (!producto.getRequiereReunion() && producto.getStock() < detalleDTO.getCantidad()) {
                 throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre());
             }
+
+            BigDecimal subtotal = producto.getPrecio().multiply(BigDecimal.valueOf(detalleDTO.getCantidad()));
+            total = total.add(subtotal);
+        }
+
+        // Crear el pedido con el total calculado
+        Pedido pedido = new Pedido();
+        pedido.setNumeroPedido(generarNumeroPedido());
+        pedido.setCliente(cliente);
+        pedido.setVendedor(vendedor);
+        pedido.setNotas(notas);
+        pedido.setEstado(Pedido.EstadoPedido.PENDIENTE);
+        pedido.setTotal(total); // Establecer el total ANTES de guardar
+
+        // Guardar el pedido
+        pedido = pedidoRepository.save(pedido);
+
+        // Crear los detalles del pedido
+        for (DetallePedidoDTO detalleDTO : detallesDTO) {
+            Producto producto = productoRepository.findById(detalleDTO.getProductoId())
+                    .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
             DetallePedido detalle = new DetallePedido();
             detalle.setPedido(pedido);
@@ -100,8 +109,6 @@ public class PedidoService {
 
             detallePedidoRepository.save(detalle);
 
-            total = total.add(detalle.getSubtotal());
-
             // Reducir stock si no requiere reunión
             if (!producto.getRequiereReunion()) {
                 producto.setStock(producto.getStock() - detalleDTO.getCantidad());
@@ -109,8 +116,7 @@ public class PedidoService {
             }
         }
 
-        pedido.setTotal(total);
-        return pedidoRepository.save(pedido);
+        return pedido;
     }
 
     public Pedido actualizarEstado(Long pedidoId, String nuevoEstado) {

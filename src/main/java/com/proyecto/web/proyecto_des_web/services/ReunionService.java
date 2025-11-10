@@ -1,12 +1,8 @@
 package com.proyecto.web.proyecto_des_web.services;
 
 import com.proyecto.web.proyecto_des_web.dto.ReunionDTO;
-import com.proyecto.web.proyecto_des_web.entities.Producto;
-import com.proyecto.web.proyecto_des_web.entities.Reunion;
-import com.proyecto.web.proyecto_des_web.entities.Usuario;
-import com.proyecto.web.proyecto_des_web.repositories.ProductoRepository;
-import com.proyecto.web.proyecto_des_web.repositories.ReunionRepository;
-import com.proyecto.web.proyecto_des_web.repositories.UsuarioRepository;
+import com.proyecto.web.proyecto_des_web.entities.*;
+import com.proyecto.web.proyecto_des_web.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +16,8 @@ import java.util.stream.Collectors;
 public class ReunionService {
 
     private final ReunionRepository reunionRepository;
-    private final UsuarioRepository usuarioRepository;
+    private final ClienteRepository clienteRepository;
+    private final VendedorRepository vendedorRepository;
     private final ProductoRepository productoRepository;
 
     public List<ReunionDTO> findAll() {
@@ -66,9 +63,9 @@ public class ReunionService {
 
     public Reunion crearReunion(Long clienteId, Long vendedorId, Long productoId, 
                                LocalDateTime fechaHora, String direccion, String notas) {
-        Usuario cliente = usuarioRepository.findById(clienteId)
+        Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
-        Usuario vendedor = usuarioRepository.findById(vendedorId)
+        Vendedor vendedor = vendedorRepository.findById(vendedorId)
                 .orElseThrow(() -> new RuntimeException("Vendedor no encontrado"));
         Producto producto = productoRepository.findById(productoId)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));

@@ -49,7 +49,7 @@ public class Producto {
         inverseJoinColumns = @JoinColumn(name = "vendedor_id")
     )
     @JsonIgnore
-    private List<Usuario> vendedores;
+    private List<Vendedor> vendedores;
     
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -60,8 +61,19 @@ public class PedidoController {
     }
 
     @PostMapping
-    public ResponseEntity<Pedido> createPedido(@RequestBody CrearPedidoRequest request) {
+    public ResponseEntity<?> createPedido(@RequestBody CrearPedidoRequest request) {
         try {
+            // Validaciones básicas
+            if (request.getClienteId() == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "ID de cliente es requerido"));
+            }
+            if (request.getVendedorId() == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "ID de vendedor es requerido"));
+            }
+            if (request.getDetalles() == null || request.getDetalles().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Los detalles del pedido son requeridos"));
+            }
+
             Pedido nuevoPedido = pedidoService.crearPedido(
                 request.getClienteId(),
                 request.getVendedorId(),
@@ -69,8 +81,12 @@ public class PedidoController {
                 request.getNotas()
             );
             return ResponseEntity.ok(nuevoPedido);
+        } catch (RuntimeException e) {
+            // Errores específicos del negocio
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(null);
+            // Errores inesperados
+            return ResponseEntity.status(500).body(Map.of("error", "Error interno del servidor: " + e.getMessage()));
         }
     }
 
