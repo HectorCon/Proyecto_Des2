@@ -34,6 +34,11 @@ public class PedidoService {
         return pedidoRepository.findById(id);
     }
 
+    public Optional<PedidoDTO> findDTOById(Long id) {
+        return pedidoRepository.findById(id)
+                .map(this::convertToDTO);
+    }
+
     public List<PedidoDTO> findByCliente(Long clienteId) {
         return pedidoRepository.findByClienteId(clienteId).stream()
                 .map(this::convertToDTO)

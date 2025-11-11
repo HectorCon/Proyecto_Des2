@@ -1,13 +1,17 @@
 package com.proyecto.web.proyecto_des_web.controllers;
 
+import com.proyecto.web.proyecto_des_web.dto.CreateProductoDTO;
 import com.proyecto.web.proyecto_des_web.dto.ProductoDTO;
 import com.proyecto.web.proyecto_des_web.entities.Producto;
 import com.proyecto.web.proyecto_des_web.services.ProductoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -60,12 +64,18 @@ public class ProductoController {
     }
 
     @PostMapping
-    public ResponseEntity<Producto> createProducto(@RequestBody Producto producto) {
+    public ResponseEntity<?> createProducto(@RequestBody CreateProductoDTO dto) {
         try {
-            Producto nuevoProducto = productoService.save(producto);
-            return ResponseEntity.ok(nuevoProducto);
+            Producto nuevoProducto = productoService.createFromDTO(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(nuevoProducto);
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Error al crear el producto");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 

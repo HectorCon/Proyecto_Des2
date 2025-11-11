@@ -1,7 +1,10 @@
 package com.proyecto.web.proyecto_des_web.services;
 
+import com.proyecto.web.proyecto_des_web.dto.CreateProductoDTO;
 import com.proyecto.web.proyecto_des_web.dto.ProductoDTO;
+import com.proyecto.web.proyecto_des_web.entities.CategoriaProducto;
 import com.proyecto.web.proyecto_des_web.entities.Producto;
+import com.proyecto.web.proyecto_des_web.repositories.CategoriaProductoRepository;
 import com.proyecto.web.proyecto_des_web.repositories.ProductoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,6 +18,7 @@ import java.util.stream.Collectors;
 public class ProductoService {
 
     private final ProductoRepository productoRepository;
+    private final CategoriaProductoRepository categoriaRepository;
 
     public List<ProductoDTO> findAll() {
         return productoRepository.findAll().stream()
@@ -63,6 +67,22 @@ public class ProductoService {
     }
 
     public Producto save(Producto producto) {
+        return productoRepository.save(producto);
+    }
+
+    public Producto createFromDTO(CreateProductoDTO dto) {
+        CategoriaProducto categoria = categoriaRepository.findById(dto.getCategoriaId())
+                .orElseThrow(() -> new RuntimeException("Categoría no encontrada con ID: " + dto.getCategoriaId()));
+        
+        Producto producto = new Producto();
+        producto.setNombre(dto.getNombre());
+        producto.setDescripcion(dto.getDescripcion());
+        producto.setPrecio(dto.getPrecio());
+        producto.setStock(dto.getStock());
+        producto.setRequiereReunion(dto.getRequiereReunion() != null ? dto.getRequiereReunion() : false);
+        producto.setActivo(true);
+        producto.setCategoria(categoria);
+        
         return productoRepository.save(producto);
     }
 

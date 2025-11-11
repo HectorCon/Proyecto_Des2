@@ -28,8 +28,8 @@ public class PedidoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Pedido> getPedidoById(@PathVariable Long id) {
-        Optional<Pedido> pedido = pedidoService.findById(id);
+    public ResponseEntity<PedidoDTO> getPedidoById(@PathVariable Long id) {
+        Optional<PedidoDTO> pedido = pedidoService.findDTOById(id);
         return pedido.map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
     }

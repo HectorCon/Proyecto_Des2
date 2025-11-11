@@ -78,6 +78,9 @@ API REST desarrollada con Spring Boot para la gestión integral de negocios, inc
 - `GET /api/vendedores/activos` - Vendedores activos
 - `GET /api/vendedores/{id}` - Obtener vendedor por ID
 - `GET /api/vendedores/para-asignacion` - Vendedores activos para asignación
+- `POST /api/vendedores` - Crear nuevo vendedor
+- `PUT /api/vendedores/{id}` - Actualizar vendedor existente
+- `PUT /api/vendedores/{id}/toggle-activo` - Activar/desactivar vendedor
 
 ### Productos (`/api/productos`)
 - `GET /api/productos` - Listar todos los productos
@@ -88,8 +91,18 @@ API REST desarrollada con Spring Boot para la gestión integral de negocios, inc
 - `POST /api/productos` - Crear producto
 - `PUT /api/productos/{id}/stock` - Actualizar stock
 
+### Categorías de Productos (`/api/categorias-productos`)
+- `GET /api/categorias-productos` - Listar todas las categorías
+- `GET /api/categorias-productos/activas` - Categorías activas
+- `GET /api/categorias-productos/{id}` - Obtener categoría por ID
+- `GET /api/categorias-productos/giro/{giroId}` - Categorías por giro de negocio
+- `POST /api/categorias-productos` - Crear nueva categoría
+- `PUT /api/categorias-productos/{id}` - Actualizar categoría
+- `DELETE /api/categorias-productos/{id}` - Eliminar categoría
+
 ### Pedidos (`/api/pedidos`)
 - `GET /api/pedidos` - Listar todos los pedidos
+- `GET /api/pedidos/{id}` - Obtener pedido por ID con detalles
 - `GET /api/pedidos/cliente/{id}` - Pedidos por cliente
 - `GET /api/pedidos/vendedor/{id}` - Pedidos por vendedor
 - `GET /api/pedidos/estado/{estado}` - Pedidos por estado
@@ -717,6 +730,81 @@ Content-Type: application/json
 }
 ```
 
+### Actualizar Vendedor
+```json
+PUT /api/vendedores/1
+Content-Type: application/json
+
+// Request
+{
+  "nombre": "Juan Carlos Pérez Actualizado",
+  "email": "juan.perez@empresa.com",
+  "telefono": "555-2001",
+  "codigo": "VEND001",
+  "especialidad": "Tecnología, Electrónicos y Software",
+  "metaMensual": 60000.00,
+  "comisionPorcentaje": 6.5,
+  "notas": "Vendedor senior especializado en productos tecnológicos"
+}
+
+// Respuesta exitosa
+{
+  "id": 1,
+  "nombre": "Juan Carlos Pérez Actualizado",
+  "email": "juan.perez@empresa.com",
+  "telefono": "555-2001",
+  "codigo": "VEND001",
+  "especialidad": "Tecnología, Electrónicos y Software",
+  "metaMensual": 60000.00,
+  "comisionPorcentaje": 6.5,
+  "activo": true,
+  "fechaIngreso": "2025-11-09T10:00:00",
+  "notas": "Vendedor senior especializado en productos tecnológicos",
+  "totalPedidos": 5,
+  "totalReuniones": 3,
+  "ultimaVenta": "2025-11-09"
+}
+
+// Respuesta fallida - Vendedor no encontrado
+{
+  "timestamp": "2025-11-09T22:00:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Vendedor no encontrado con ID: 999",
+  "path": "/api/vendedores/999"
+}
+
+// Respuesta fallida - Email duplicado
+{
+  "timestamp": "2025-11-09T22:00:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Ya existe un vendedor con el email: juan.perez@empresa.com",
+  "path": "/api/vendedores/1"
+}
+```
+
+### Activar/Desactivar Vendedor
+```json
+PUT /api/vendedores/1/toggle-activo
+
+// Respuesta exitosa
+{
+  "mensaje": "Vendedor desactivado exitosamente",
+  "vendedorId": 1,
+  "activo": false
+}
+
+// Respuesta fallida
+{
+  "timestamp": "2025-11-09T22:00:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Vendedor no encontrado con ID: 999",
+  "path": "/api/vendedores/999/toggle-activo"
+}
+```
+
 ### Crear un Pedido
 ```json
 POST /api/pedidos
@@ -815,14 +903,20 @@ GET /api/pedidos
     "estado": "PENDIENTE",
     "total": 2599.98,
     "notas": "Pedido de smartphones para empresa",
-    "cliente": {
-      "id": 1,
-      "nombre": "María González"
-    },
-    "vendedor": {
-      "id": 1,
-      "nombre": "Juan Carlos Pérez"
-    }
+    "clienteNombre": "María González",
+    "clienteEmail": "maria.gonzalez@gmail.com",
+    "vendedorNombre": "Juan Carlos Pérez",
+    "vendedorEmail": "juan.perez@empresa.com",
+    "detalles": [
+      {
+        "id": 1,
+        "productoId": 1,
+        "productoNombre": "iPhone 15",
+        "cantidad": 2,
+        "precioUnitario": 1299.99,
+        "subtotal": 2599.98
+      }
+    ]
   }
 ]
 
@@ -833,6 +927,52 @@ GET /api/pedidos
   "error": "Internal Server Error",
   "message": "Error al obtener pedidos",
   "path": "/api/pedidos"
+}
+```
+
+### Obtener Pedido por ID
+```json
+GET /api/pedidos/1
+
+// Respuesta exitosa
+{
+  "id": 1,
+  "numeroPedido": "PED-2025-001",
+  "fechaPedido": "2025-11-01T10:00:00",
+  "estado": "PENDIENTE",
+  "total": 2599.98,
+  "notas": "Pedido de smartphones para empresa",
+  "clienteNombre": "María González",
+  "clienteEmail": "maria.gonzalez@gmail.com",
+  "vendedorNombre": "Juan Carlos Pérez",
+  "vendedorEmail": "juan.perez@empresa.com",
+  "detalles": [
+    {
+      "id": 1,
+      "productoId": 1,
+      "productoNombre": "iPhone 15",
+      "cantidad": 2,
+      "precioUnitario": 1299.99,
+      "subtotal": 2599.98
+    },
+    {
+      "id": 2,
+      "productoId": 3,
+      "productoNombre": "MacBook Pro M3",
+      "cantidad": 1,
+      "precioUnitario": 2499.99,
+      "subtotal": 2499.99
+    }
+  ]
+}
+
+// Respuesta fallida - Pedido no encontrado
+{
+  "timestamp": "2025-11-09T22:00:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Pedido no encontrado con ID: 999",
+  "path": "/api/pedidos/999"
 }
 ```
 
@@ -1170,6 +1310,241 @@ GET /api/reportes/dashboard
   "error": "Internal Server Error",
   "message": "Error al generar dashboard",
   "path": "/api/reportes/dashboard"
+}
+```
+
+## Categorías de Productos
+
+### Listar Todas las Categorías
+```json
+GET /api/categorias-productos
+
+// Respuesta exitosa
+[
+  {
+    "id": 1,
+    "nombre": "Smartphones",
+    "descripcion": "Teléfonos inteligentes",
+    "giroNegocio": {
+      "id": 1,
+      "nombre": "Tecnología y Electrónicos",
+      "descripcion": "Productos tecnológicos y electrónicos",
+      "activo": true
+    }
+  },
+  {
+    "id": 4,
+    "nombre": "Consultoría IT",
+    "descripcion": "Servicios de consultoría tecnológica",
+    "giroNegocio": {
+      "id": 2,
+      "nombre": "Servicios de Consultoría",
+      "descripcion": "Servicios profesionales",
+      "activo": true
+    }
+  }
+]
+
+// Respuesta fallida
+{
+  "timestamp": "2025-11-10T10:00:00",
+  "status": 500,
+  "error": "Internal Server Error",
+  "message": "Error al obtener categorías",
+  "path": "/api/categorias-productos"
+}
+```
+
+### Listar Categorías Activas
+```json
+GET /api/categorias-productos/activas
+
+// Respuesta exitosa
+[
+  {
+    "id": 1,
+    "nombre": "Smartphones",
+    "descripcion": "Teléfonos inteligentes",
+    "giroNegocio": {
+      "id": 1,
+      "nombre": "Tecnología y Electrónicos",
+      "activo": true
+    }
+  }
+]
+
+// Respuesta fallida
+{
+  "timestamp": "2025-11-10T10:00:00",
+  "status": 500,
+  "error": "Internal Server Error",
+  "message": "Error al obtener categorías activas",
+  "path": "/api/categorias-productos/activas"
+}
+```
+
+### Obtener Categoría por ID
+```json
+GET /api/categorias-productos/1
+
+// Respuesta exitosa
+{
+  "id": 1,
+  "nombre": "Smartphones",
+  "descripcion": "Teléfonos inteligentes de última generación",
+  "giroNegocio": {
+    "id": 1,
+    "nombre": "Tecnología y Electrónicos",
+    "descripcion": "Productos tecnológicos y electrónicos",
+    "activo": true
+  }
+}
+
+// Respuesta fallida - Categoría no encontrada
+{
+  "timestamp": "2025-11-10T10:00:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Categoría no encontrada con ID: 999",
+  "path": "/api/categorias-productos/999"
+}
+```
+
+### Obtener Categorías por Giro de Negocio
+```json
+GET /api/categorias-productos/giro/1
+
+// Respuesta exitosa
+[
+  {
+    "id": 1,
+    "nombre": "Smartphones",
+    "descripcion": "Teléfonos inteligentes",
+    "giroNegocio": {
+      "id": 1,
+      "nombre": "Tecnología y Electrónicos"
+    }
+  },
+  {
+    "id": 2,
+    "nombre": "Laptops",
+    "descripcion": "Computadoras portátiles",
+    "giroNegocio": {
+      "id": 1,
+      "nombre": "Tecnología y Electrónicos"
+    }
+  }
+]
+
+// Respuesta fallida
+{
+  "timestamp": "2025-11-10T10:00:00",
+  "status": 500,
+  "error": "Internal Server Error",
+  "message": "Error al obtener categorías por giro",
+  "path": "/api/categorias-productos/giro/1"
+}
+```
+
+### Crear Nueva Categoría
+```json
+POST /api/categorias-productos
+Content-Type: application/json
+
+// Request
+{
+  "nombre": "Tablets",
+  "descripcion": "Tabletas y dispositivos táctiles",
+  "giroNegocio": {
+    "id": 1
+  }
+}
+
+// Respuesta exitosa
+{
+  "id": 10,
+  "nombre": "Tablets",
+  "descripcion": "Tabletas y dispositivos táctiles",
+  "giroNegocio": {
+    "id": 1,
+    "nombre": "Tecnología y Electrónicos",
+    "descripcion": "Productos tecnológicos y electrónicos",
+    "activo": true
+  }
+}
+
+// Respuesta fallida - Categoría duplicada
+{
+  "timestamp": "2025-11-10T10:00:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Ya existe una categoría con ese nombre en el giro de negocio",
+  "path": "/api/categorias-productos"
+}
+```
+
+### Actualizar Categoría
+```json
+PUT /api/categorias-productos/1
+Content-Type: application/json
+
+// Request
+{
+  "nombre": "Smartphones Premium",
+  "descripcion": "Teléfonos inteligentes de alta gama",
+  "giroNegocio": {
+    "id": 1
+  }
+}
+
+// Respuesta exitosa
+{
+  "id": 1,
+  "nombre": "Smartphones Premium",
+  "descripcion": "Teléfonos inteligentes de alta gama",
+  "giroNegocio": {
+    "id": 1,
+    "nombre": "Tecnología y Electrónicos",
+    "activo": true
+  }
+}
+
+// Respuesta fallida - Categoría no encontrada
+{
+  "timestamp": "2025-11-10T10:00:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Categoría no encontrada con ID: 999",
+  "path": "/api/categorias-productos/999"
+}
+```
+
+### Eliminar Categoría
+```json
+DELETE /api/categorias-productos/5
+
+// Respuesta exitosa
+{
+  "status": 200,
+  "message": "Categoría eliminada exitosamente"
+}
+
+// Respuesta fallida - Categoría no encontrada
+{
+  "timestamp": "2025-11-10T10:00:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Categoría no encontrada con ID: 999",
+  "path": "/api/categorias-productos/999"
+}
+
+// Respuesta fallida - Categoría en uso
+{
+  "timestamp": "2025-11-10T10:00:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "No se puede eliminar la categoría porque tiene productos asociados",
+  "path": "/api/categorias-productos/1"
 }
 ```
 
