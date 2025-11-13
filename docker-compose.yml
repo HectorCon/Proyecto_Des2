@@ -1,0 +1,39 @@
+services:
+  # Base de datos PostgreSQL
+  postgres:
+    image: postgres:15
+    container_name: proyecto_postgres
+    environment:
+      POSTGRES_DB: proyecto
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: manager1
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - proyecto-network
+    restart: unless-stopped
+
+  # Aplicación Spring Boot
+  app:
+    build: .
+    container_name: proyecto_app
+    depends_on:
+      - postgres
+    environment:
+      # Solo sobrescribimos la URL para usar el nombre del servicio postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/proyecto
+    ports:
+      - "8080:8080"
+    networks:
+      - proyecto-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  proyecto-network:
+    driver: bridge

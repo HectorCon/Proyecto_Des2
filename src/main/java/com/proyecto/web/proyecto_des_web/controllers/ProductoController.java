@@ -1,5 +1,6 @@
 package com.proyecto.web.proyecto_des_web.controllers;
 
+import com.proyecto.web.proyecto_des_web.dto.BulkStockUpdateDTO;
 import com.proyecto.web.proyecto_des_web.dto.CreateProductoDTO;
 import com.proyecto.web.proyecto_des_web.dto.ProductoDTO;
 import com.proyecto.web.proyecto_des_web.entities.Producto;
@@ -100,6 +101,42 @@ public class ProductoController {
             return ResponseEntity.ok(producto);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/{id}/stock/incrementar")
+    public ResponseEntity<Producto> incrementarStock(@PathVariable Long id, @RequestParam Integer cantidad) {
+        try {
+            Producto producto = productoService.incrementarStock(id, cantidad);
+            return ResponseEntity.ok(producto);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @PutMapping("/{id}/stock/decrementar")
+    public ResponseEntity<Producto> decrementarStock(@PathVariable Long id, @RequestParam Integer cantidad) {
+        try {
+            Producto producto = productoService.decrementarStock(id, cantidad);
+            return ResponseEntity.ok(producto);
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @PutMapping("/stock/masivo")
+    public ResponseEntity<?> actualizarStockMasivo(@RequestBody BulkStockUpdateDTO dto) {
+        try {
+            List<Producto> productosActualizados = productoService.actualizarStockMasivo(dto.getOperaciones());
+            return ResponseEntity.ok(productosActualizados);
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
         }
     }
 

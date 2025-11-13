@@ -2,6 +2,7 @@ package com.proyecto.web.proyecto_des_web.services;
 
 import com.proyecto.web.proyecto_des_web.dto.CreateProductoDTO;
 import com.proyecto.web.proyecto_des_web.dto.ProductoDTO;
+import com.proyecto.web.proyecto_des_web.dto.StockOperationDTO;
 import com.proyecto.web.proyecto_des_web.entities.CategoriaProducto;
 import com.proyecto.web.proyecto_des_web.entities.Producto;
 import com.proyecto.web.proyecto_des_web.repositories.CategoriaProductoRepository;
@@ -98,6 +99,45 @@ public class ProductoService {
             return productoRepository.save(producto);
         }
         throw new RuntimeException("Producto no encontrado");
+    }
+
+    public Producto incrementarStock(Long id, Integer cantidad) {
+        Optional<Producto> productoOpt = productoRepository.findById(id);
+        if (productoOpt.isPresent()) {
+            Producto producto = productoOpt.get();
+            producto.setStock(producto.getStock() + cantidad);
+            return productoRepository.save(producto);
+        }
+        throw new RuntimeException("Producto no encontrado");
+    }
+
+    public Producto decrementarStock(Long id, Integer cantidad) {
+        Optional<Producto> productoOpt = productoRepository.findById(id);
+        if (productoOpt.isPresent()) {
+            Producto producto = productoOpt.get();
+            int nuevoStock = producto.getStock() - cantidad;
+            if (nuevoStock < 0) {
+                throw new RuntimeException("Stock insuficiente. Stock actual: " + producto.getStock());
+            }
+            producto.setStock(nuevoStock);
+            return productoRepository.save(producto);
+        }
+        throw new RuntimeException("Producto no encontrado");
+    }
+
+    public List<Producto> actualizarStockMasivo(List<StockOperationDTO> operaciones) {
+        return operaciones.stream().map(op -> {
+            switch (op.getOperacion().toUpperCase()) {
+                case "SET":
+                    return actualizarStock(op.getProductoId(), op.getCantidad());
+                case "ADD":
+                    return incrementarStock(op.getProductoId(), op.getCantidad());
+                case "SUBTRACT":
+                    return decrementarStock(op.getProductoId(), op.getCantidad());
+                default:
+                    throw new RuntimeException("Operación no válida: " + op.getOperacion());
+            }
+        }).collect(Collectors.toList());
     }
 
     private ProductoDTO convertToDTO(Producto producto) {
